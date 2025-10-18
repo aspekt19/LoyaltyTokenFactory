@@ -245,8 +245,8 @@ describe("LoyaltyTokenFactory", function () {
 ## 📚 Related Resources
 
 - **🪙 [Loyal Spark ERC-20 Contract](https://github.com/aspekt19/LoyalSparkERC20)** - Token implementation
-- **💻 [Loyal Spark Web App](https://loyalspark.online/merchant)** - User interface
-- **🎨 [Media Kit](https://github.com/aspekt19/loyal-spark/blob/main/public/media-kit/README.md)** - Brand guidelines
+- **💻 [Loyal Spark Web App](https://github.com/aspekt19/unboxed-loyalty-spark)** - User interface
+- **🎨 [Media Kit](https://github.com/aspekt19/unboxed-loyalty-spark/tree/main/public/media-kit)** - Brand guidelines
 - **📖 [BASE Network Docs](https://docs.base.org)** - Blockchain documentation
 - **🔧 [OpenZeppelin](https://docs.openzeppelin.com/)** - Smart contract library
 
