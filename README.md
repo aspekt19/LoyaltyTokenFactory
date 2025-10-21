@@ -1,307 +1,216 @@
-# 🏭 Loyal Spark Token Factory
+# LoyaltyTokenFactory - Smart Contract Documentation
 
-<div align="center">
+## Overview
 
-![BASE Network](https://img.shields.io/badge/BASE-Mainnet-blue?style=for-the-badge&logo=ethereum)
-![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.0-363636?style=for-the-badge&logo=solidity)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+LoyaltyTokenFactory is a factory contract for creating and managing loyalty tokens on the Base blockchain. It uses the proxy pattern to save gas when deploying new programs.
 
-**One-Click Loyalty Program Deployment**
+**Official project website:** [https://loyalspark.online](https://loyalspark.online)
 
-[Documentation](https://docs.loyalspark.app) • [ERC-20 Contract](https://github.com/aspekt19/LoyalSparkERC20) • [Web App](https://github.com/aspekt19/loyal-spark)
+## Contract Addresses (Base Mainnet)
 
-</div>
-
----
-
-## 📋 Overview
-
-The **Loyalty Token Factory** is a smart contract that enables merchants to deploy their own branded ERC-20 loyalty tokens with a single transaction. No coding required - just provide your token details and start rewarding customers instantly on the BASE blockchain.
-
-### ✨ Key Features
-
-- **⚡ One-Transaction Deployment** - Deploy complete loyalty programs instantly
-- **🎨 Full Customization** - Set token name, symbol, and metadata
-- **📊 Program Tracking** - Keep track of all deployed loyalty programs
-- **🔍 Transparent Registry** - All deployments recorded on-chain
-- **💰 Low Gas Costs** - Optimized for BASE Network efficiency
-- **🔒 Secure Ownership** - Deployer automatically becomes token owner
+- **LoyaltyTokenFactory**: `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80`
+- **LoyalSparkERC20 (Implementation)**: `0xe6BA426C9c51281B929a17444De02c65815E27C3`
+- **Chain ID**: `8453` (Base Mainnet)
 
 ---
 
-## 🏗️ Architecture
+## Main Functions
 
-```solidity
-contract LoyaltyTokenFactory
-```
+### `createLoyaltyToken(string _name, string _symbol, address _merchantAddress) → address`
 
-### Core Functionality
+Creates a new loyalty token for a merchant.
 
-The factory contract stores the creation code for the LoyalSparkERC20 token and uses the `CREATE` opcode to deploy new instances with custom parameters.
+**Parameters:**
+- `_name` - Loyalty program name (e.g., "FREE POPCORN")
+- `_symbol` - Token symbol (e.g., "POP")
+- `_merchantAddress` - Merchant owner wallet address
 
-```solidity
-function createLoyaltyToken(
-    string memory name,
-    string memory symbol,
-    string memory tokenURI
-) external returns (address)
-```
+**Returns:**
+- Address of the new token proxy contract
 
----
+**Events:**
+- `LoyaltyTokenCreated(address indexed tokenAddress, address indexed merchantAddress, string name, string symbol)`
 
-## 🚀 Deployment Process
-
-### Step 1: Deploy Factory Contract
-
-```javascript
-const LoyaltyTokenFactory = await ethers.deployContract("LoyaltyTokenFactory");
-await LoyaltyTokenFactory.waitForDeployment();
-
-console.log(`Factory deployed at: ${LoyaltyTokenFactory.target}`);
-```
-
-### Step 2: Create Loyalty Programs
-
-Merchants can create their loyalty tokens through the factory:
-
+**Usage Example:**
 ```javascript
 const tx = await factoryContract.createLoyaltyToken(
-  "Coffee Shop Rewards",    // Token name
-  "COFFEE",                 // Token symbol
-  "ipfs://QmExample..."     // Metadata URI
+  "Cinema Rewards",
+  "CINEMA",
+  merchantAddress
 );
 
 const receipt = await tx.wait();
-const tokenAddress = receipt.logs[0].address;
+const tokenAddress = receipt.logs[0].args.tokenAddress;
+```
+
+### `reactivateExistingToken(address _tokenProxyAddress)`
+
+Reactivates a previously created loyalty token.
+
+**Parameters:**
+- `_tokenProxyAddress` - Token proxy contract address
+
+**Events:**
+- `LoyaltyTokenReactivated(address indexed tokenAddress, address indexed activatedBy, string message)`
+
+**Usage Example:**
+```javascript
+await factoryContract.reactivateExistingToken(tokenProxyAddress);
+```
+
+### `tokenImplementation() → address` (view)
+
+Returns the token implementation address.
+
+**Example:**
+```javascript
+const implementationAddress = await factoryContract.tokenImplementation();
+```
+
+### `factoryAdmin() → address` (view)
+
+Returns the factory administrator address.
+
+**Example:**
+```javascript
+const adminAddress = await factoryContract.factoryAdmin();
 ```
 
 ---
 
-## 📡 Events
+## Loyalty Program Lifecycle
 
-### TokenCreated
-
-Emitted when a new loyalty token is deployed:
-
-```solidity
-event TokenCreated(
-    address indexed tokenAddress,
-    address indexed owner,
-    string name,
-    string symbol,
-    string tokenURI
-);
-```
-
-**Indexing**: Use this event to track all loyalty programs deployed through the factory.
-
----
-
-## 🔗 Network Information
-
-| Parameter | Value |
-|-----------|-------|
-| **Blockchain** | BASE Mainnet |
-| **Chain ID** | 8453 |
-| **Factory Contract** | `0x61b154cAE13F2312D33397419195753D3849F858` |
-| **Gas Cost (avg)** | ~2-3M gas per deployment |
-
----
-
-## 💡 Use Cases
-
-### 🏢 Multi-Store Franchises
-Deploy separate loyalty tokens for each franchise location while maintaining brand consistency.
-
-### 🛍️ Marketplace Platforms
-E-commerce platforms can offer loyalty program creation as a service to merchants.
-
-### 🎯 Brand Partnerships
-Multiple brands can create their own tokens while participating in a larger loyalty ecosystem.
-
-### 🏪 Small Business Onboarding
-Simplify Web3 adoption for small businesses with one-click loyalty program creation.
-
----
-
-## 🛠️ Integration Example
-
-### Complete Merchant Onboarding Flow
+### 1. Creating a Program
 
 ```javascript
-import { ethers } from 'ethers';
-import FactoryABI from './LoyaltyTokenFactory.json';
-import TokenABI from './LoyalSparkERC20.json';
-
-// Step 1: Connect to factory
-const provider = new ethers.providers.Web3Provider(window.ethereum);
-const signer = provider.getSigner();
-const factory = new ethers.Contract(factoryAddress, FactoryABI, signer);
-
-// Step 2: Create loyalty token
-const createTx = await factory.createLoyaltyToken(
-  "My Business Rewards",
-  "MYBIZ",
-  "ipfs://QmMetadata..."
+// Merchant creates a program through the factory
+const tx = await factoryContract.createLoyaltyToken(
+  "Summer Promo",
+  "SUMMER",
+  merchantWallet
 );
 
-// Step 3: Get deployed token address
-const receipt = await createTx.wait();
-const tokenCreatedEvent = receipt.logs.find(
-  log => log.topics[0] === ethers.utils.id("TokenCreated(address,address,string,string,string)")
-);
-const tokenAddress = ethers.utils.getAddress("0x" + tokenCreatedEvent.topics[1].slice(26));
+const receipt = await tx.wait();
+const tokenAddress = receipt.logs[0].args.tokenAddress;
+```
 
-// Step 4: Interact with new token
-const token = new ethers.Contract(tokenAddress, TokenABI, signer);
+### 2. Reactivating an Existing Program
 
-// Mint initial rewards
-await token.mintLoyaltyPoints(customerAddress, ethers.utils.parseEther("100"));
+```javascript
+// Merchant reactivates a previously created program
+await factoryContract.reactivateExistingToken(existingTokenAddress);
 ```
 
 ---
 
-## 📊 Factory Statistics
+## Events
 
-Track factory usage with these queries:
+### LoyaltyTokenCreated
+
+Emitted when a new loyalty token is created.
+
+**Parameters:**
+- `tokenAddress` (indexed) - Address of the created token
+- `merchantAddress` (indexed) - Merchant owner address
+- `name` - Program name
+- `symbol` - Token symbol
+
+### LoyaltyTokenReactivated
+
+Emitted when a token is reactivated.
+
+**Parameters:**
+- `tokenAddress` (indexed) - Address of the reactivated token
+- `activatedBy` (indexed) - Address of the activator
+- `message` - Reactivation message
+
+---
+
+## Frontend Integration
+
+### Connecting to the Contract
 
 ```javascript
-// Get total deployments
-const filter = factory.filters.TokenCreated();
-const events = await factory.queryFilter(filter);
-console.log(`Total loyalty programs created: ${events.length}`);
+import { CONTRACTS } from '@/config/contracts';
+import { useWriteContract, useReadContract } from 'wagmi';
 
-// Get programs by merchant
-const merchantPrograms = events.filter(
-  event => event.args.owner.toLowerCase() === merchantAddress.toLowerCase()
-);
+// Creating a program
+const { writeContract } = useWriteContract();
 
-// Get recent deployments
-const recentPrograms = events.slice(-10);
+await writeContract({
+  address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
+  abi: CONTRACTS.LOYALTY_TOKEN_FACTORY.abi,
+  functionName: 'createLoyaltyToken',
+  args: [name, symbol, merchantAddress],
+});
 ```
 
----
-
-## 🔒 Security Considerations
-
-### ✅ Factory Security
-- **Deterministic Deployments** - Each token gets a unique address
-- **No Admin Functions** - Factory is permissionless and immutable
-- **Event Logging** - All deployments are traceable on-chain
-
-### ✅ Token Security
-- **OpenZeppelin Base** - Uses audited ERC-20 implementation
-- **Ownership Transfer** - Deployer receives ownership automatically
-- **No Proxy Risk** - Direct deployment, no upgradeable contracts
-
----
-
-## 📈 Gas Optimization
-
-The factory uses optimized bytecode deployment:
-
-| Operation | Gas Cost |
-|-----------|----------|
-| Factory Deployment | ~1.5M gas |
-| Token Creation | ~2.5M gas |
-| Total Per Program | ~2.5M gas |
-
-**Tips for merchants:**
-- Deploy during low network activity
-- Batch multiple deployments if possible
-- Use BASE Network for lower fees compared to Ethereum mainnet
-
----
-
-## 🧪 Testing
-
-### Hardhat Test Example
+### Getting Creation Events
 
 ```javascript
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
-
-describe("LoyaltyTokenFactory", function () {
-  it("Should deploy a new loyalty token", async function () {
-    const [owner] = await ethers.getSigners();
-    
-    const Factory = await ethers.getContractFactory("LoyaltyTokenFactory");
-    const factory = await Factory.deploy();
-    
-    const tx = await factory.createLoyaltyToken(
-      "Test Rewards",
-      "TEST",
-      "ipfs://test"
-    );
-    
-    const receipt = await tx.wait();
-    expect(receipt.status).to.equal(1);
-  });
+// Fetching token creation history
+const logs = await publicClient.getLogs({
+  address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
+  event: {
+    type: 'event',
+    name: 'LoyaltyTokenCreated',
+    inputs: [
+      { indexed: true, name: 'tokenAddress', type: 'address' },
+      { indexed: true, name: 'merchantAddress', type: 'address' },
+      { indexed: false, name: 'name', type: 'string' },
+      { indexed: false, name: 'symbol', type: 'string' },
+    ],
+  },
+  fromBlock: startBlock,
+  toBlock: 'latest',
 });
 ```
 
 ---
 
-## 📚 Related Resources
+## Security
 
-- **🪙 [Loyal Spark ERC-20 Contract](https://github.com/aspekt19/LoyalSparkERC20)** - Token implementation
-- **💻 [Loyal Spark Web App](https://github.com/aspekt19/unboxed-loyalty-spark)** - User interface
-- **🎨 [Media Kit](https://github.com/aspekt19/unboxed-loyalty-spark/tree/main/public/media-kit)** - Brand guidelines
-- **📖 [BASE Network Docs](https://docs.base.org)** - Blockchain documentation
-- **🔧 [OpenZeppelin](https://docs.openzeppelin.com/)** - Smart contract library
+### Access Control
 
----
+- Only the factory administrator can update the implementation contract
+- Each merchant receives full control over their loyalty token
+- The factory uses the proxy pattern for secure upgrades
 
-## 🛣️ Roadmap
+### Proxy Pattern
 
-- [ ] Multi-signature deployment support
-- [ ] Template presets for common use cases
-- [ ] Enhanced metadata standards
-- [ ] Cross-chain deployment support
-- [ ] Deployment fee mechanism for sustainability
+The factory creates minimal proxy contracts pointing to a single LoyalSparkERC20 implementation. This allows:
+- Saving gas when creating new programs
+- Updating token logic without changing addresses
+- Isolating the state of each program
 
 ---
 
-## 🤝 Contributing
+## Frequently Asked Questions
 
-We welcome contributions! Here's how you can help:
+### How much does it cost to create a program?
 
-1. **Report Bugs** - Open an issue with details
-2. **Suggest Features** - Share your ideas for improvements
-3. **Submit PRs** - Fork, create a branch, and submit a pull request
-4. **Improve Docs** - Help make documentation clearer
+The cost depends on the gas price on the Base network. Approximately 0.0001-0.001 ETH per creation transaction.
 
-### Development Setup
+### Can a merchant create multiple programs?
 
-```bash
-git clone https://github.com/aspekt19/LoyaltyTokenFactory.git
-cd LoyaltyTokenFactory
-npm install
-npx hardhat compile
-npx hardhat test
-```
+Yes, a merchant can create an unlimited number of loyalty programs.
 
----
+### Can the implementation be changed after token creation?
 
-## 📄 License
+Yes, the factory administrator can update the implementation, and all existing proxies will automatically use the new version.
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### How to verify that a token was created through the factory?
+
+You can check the `LoyaltyTokenCreated` events or call `tokenImplementation()` on the proxy and compare it with the address from the factory.
 
 ---
 
-## 🌟 Acknowledgments
+## Support
 
-- Built with [Hardhat](https://hardhat.org/)
-- Uses [OpenZeppelin](https://openzeppelin.com/) contracts
-- Deployed on [BASE Network](https://base.org/)
-- Part of the Loyal Spark ecosystem
+For questions and support:
+- Official website: [https://loyalspark.online](https://loyalspark.online)
+- Email: support@loyalspark.io
 
----
+## License
 
-<div align="center">
-
-**Empowering Merchants with Blockchain Technology**
-
-[Website](https://loyalspark.app) • [Twitter](#) • [Discord](#)
-
-</div>
+MIT License - see LICENSE file for details.
