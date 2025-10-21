@@ -1,3 +1,7 @@
+/**
+ *Submitted for verification at basescan.org on 2025-10-21
+*/
+
 // SPDX-License-Identifier: MIT
 // File: @openzeppelin/contracts/proxy/Proxy.sol
 
@@ -677,12 +681,12 @@ contract ERC1967Proxy is Proxy {
 
 pragma solidity ^0.8.20;
 
-// Импорт контракта ERC-1967 Proxy
+// Импорт контракта ERC-1967 Proxy для создания прокси-контрактов
 
 
 /**
  * @title ILoyalSparkERC20
- * @notice Интерфейс для контракта логики, используемый для кодирования данных инициализации.
+ * @notice Обновленный интерфейс для контракта логики LoyalSparkERC20.
  */
 interface ILoyalSparkERC20 {
     /**
@@ -693,36 +697,61 @@ interface ILoyalSparkERC20 {
         string memory symbol_,
         address initialMerchantAddress
     ) external;
+
+    /**
+     * @notice Функция для восстановления полезности токена (только для мерчанта).
+     */
+    function unpauseUtility() external;
+    
+    /**
+     * @notice Функция для включения минтинга (только для мерчанта).
+     */
+    function enableMinting() external;
+    
+    /**
+     * @notice Получение текущего адреса мерчанта.
+     */
+    function getMerchantAddress() external view returns (address);
 }
 
 /**
  * @title LoyaltyTokenFactory
- * @notice Фабрика для развертывания прокси-контрактов токенов лояльности LoyalSparkERC20 для новых мерчантов.
+ * @notice Фабрика для развертывания прокси-контрактов токенов лояльности.
+ * Теперь мерчант имеет полный контроль над реактивацией своего токена.
  */
 contract LoyaltyTokenFactory {
-    // Больше нет необходимости в `using Address for address;`
-
     // Адрес контракта имплементации LoyalSparkERC20 (логика токена)
     address public immutable tokenImplementation;
 
-    // Событие, которое генерируется при успешном создании нового токена лояльности (прокси)
+    // Адрес администратора, который имеет право на реактивацию токенов (сохранен для общих админских целей, 
+    // но больше не используется для реактивации)
+    address public immutable factoryAdmin;
+
+    // События
     event LoyaltyTokenCreated(address indexed tokenAddress, address indexed merchantAddress, string name, string symbol);
+    event LoyaltyTokenReactivated(address indexed tokenAddress, address indexed activatedBy, string message);
 
     /**
      * @notice Конструктор Фабрики.
-     * @param _tokenImplementation Адрес ранее развернутого контракта логики LoyalSparkERC20.
+     * @param _tokenImplementation Адрес контракта логики LoyalSparkERC20.
+     * @param _admin Адрес, который будет администратором Фабрики (для общих целей).
      */
-    constructor(address _tokenImplementation) {
-        // ОКОНЧАТЕЛЬНОЕ ИСПРАВЛЕНИЕ: Используем встроенное свойство Solidity .code.length
+    constructor(address _tokenImplementation, address _admin) {
+        // Проверка, что адрес имплементации является контрактом
         require(_tokenImplementation.code.length > 0, "Implementation must be a contract");
+        require(_admin != address(0), "Admin address cannot be zero");
         
         tokenImplementation = _tokenImplementation;
+        factoryAdmin = _admin;
     }
+
+    // --- Core Functions ---
 
     /**
      * @notice Развертывает новый прокси-контракт токена лояльности для мерчанта.
-     * @param _name Имя токена лояльности (например, "Coffee Points").
-     * @param _symbol Символ токена (например, "COFP").
+     * @dev Доступно любому вызывающему адресу.
+     * @param _name Имя токена лояльности.
+     * @param _symbol Символ токена.
      * @param _merchantAddress Адрес, который будет назначен мерчантом (владельцем) этого токена.
      * @return tokenProxy Адрес нового прокси-контракта токена.
      */
@@ -744,5 +773,32 @@ contract LoyaltyTokenFactory {
 
         // 3. Генерируем событие о создании нового токена
         emit LoyaltyTokenCreated(tokenProxy, _merchantAddress, _name, _symbol);
+    }
+
+    /**
+     * @notice Активирует ранее деактивированный токен (программу лояльности).
+     * @dev Функцию может вызвать ТОЛЬКО мерчант, которому принадлежит данный токен.
+     * Фабрика авторизует перезапуск и подает сигнал.
+     * @param _tokenProxyAddress Адрес существующего прокси-контракта токена.
+     */
+    function reactivateExistingToken(address _tokenProxyAddress) public {
+        // 1. Получаем адрес мерчанта из самого токена.
+        address merchantAddress = ILoyalSparkERC20(_tokenProxyAddress).getMerchantAddress();
+        
+        // 2. Проверяем, что только сам мерчант вызывает эту функцию.
+        require(msg.sender == merchantAddress, "Factory: Only the Token Merchant can reactivate their own token.");
+
+        // --- ЛОГИКА РЕАКТИВАЦИИ ---
+        // Поскольку вызовы unpauseUtility() и enableMinting() должны быть сделаны
+        // самим мерчантом, Фабрика просто подтверждает авторизацию и подает сигнал.
+        
+        // ILoyalSparkERC20 token = ILoyalSparkERC20(_tokenProxyAddress);
+        // token.unpauseUtility(); // <--- Этот вызов от Фабрики все еще будет проваливаться
+        
+        emit LoyaltyTokenReactivated(
+            _tokenProxyAddress, 
+            msg.sender, 
+            "Merchant authorized reactivation. Merchant must now call unpauseUtility() and enableMinting() directly on the token address to complete the process."
+        );
     }
 }
