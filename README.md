@@ -183,7 +183,7 @@ The factory creates minimal proxy contracts pointing to a single LoyalSparkERC20
 - Updating token logic without changing addresses
 - Isolating the state of each program
 
----
+---------
 
 ## Frequently Asked Questions
 
